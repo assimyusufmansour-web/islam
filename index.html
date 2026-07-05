@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Islamic Quiz — 30 Questions</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --teal:  #0d9488;
+    --gold:  #f59e0b;
+    --green: #16a34a;
+    --red:   #ef4444;
+    --bg:    #f0fdfa;
+    --card:  #ffffff;
+    --text:  #134e4a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    background-image:
+      radial-gradient(circle at 10% 20%, rgba(20,184,166,0.08) 0%, transparent 50%),
+      radial-gradient(circle at 90% 80%, rgba(245,158,11,0.08) 0%, transparent 50%);
+    min-height: 100vh;
+    padding: 2rem 1rem 5rem;
+    color: var(--text);
+  }
+
+  /* ── Header ── */
+  .header { text-align: center; margin-bottom: 1.8rem; }
+  .header::before {
+    content: "☪";
+    display: block; font-size: 2.8rem; margin-bottom: .4rem;
+    animation: float 3s ease-in-out infinite;
+  }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+  .header h1 {
+    font-family: 'Baloo 2', cursive;
+    font-size: clamp(1.7rem,5vw,2.8rem);
+    font-weight: 800; color: var(--teal); line-height: 1.1; margin-bottom: .3rem;
+  }
+  .header h1 span { color: var(--gold); }
+  .badge-row { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:.8rem; }
+  .badge { font-size:12px; font-weight:700; padding:4px 14px; border-radius:20px; letter-spacing:.04em; }
+  .badge-teal   { background:#ccfbf1; color:#0f766e; }
+  .badge-gold   { background:#fef3c7; color:#92400e; }
+  .badge-purple { background:#ede9fe; color:#5b21b6; }
+
+  /* ── Sticky score bar ── */
+  .score-bar {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(13,148,136,0.97);
+    backdrop-filter: blur(8px);
+    padding: 10px 1.2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 10px;
+    border-bottom: 2px solid rgba(255,255,255,0.15);
+  }
+  .score-counts { display:flex; gap:18px; align-items:center; }
+  .score-pill {
+    display:flex; align-items:center; gap:7px;
+    font-family:'Baloo 2',cursive; color:white;
+  }
+  .dot {
+    width:30px; height:30px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:14px; font-weight:800;
+  }
+  .dot-correct { background:rgba(255,255,255,0.25); }
+  .dot-wrong   { background:rgba(255,255,255,0.12); }
+  .pill-label { font-size:12px; color:rgba(255,255,255,0.8); font-weight:600; }
+  .progress-wrap { flex:1; min-width:110px; max-width:240px; }
+  .progress-track { height:8px; background:rgba(255,255,255,0.2); border-radius:8px; overflow:hidden; }
+  .progress-fill  { height:100%; background:#fff; border-radius:8px; width:0%; transition:width .4s ease; }
+  .progress-text  { font-size:11px; color:rgba(255,255,255,0.8); margin-top:3px; font-weight:600; }
+  .reset-btn {
+    background:rgba(255,255,255,0.15); border:1.5px solid rgba(255,255,255,0.3);
+    color:white; font-family:'Nunito',sans-serif; font-size:12px; font-weight:700;
+    padding:5px 14px; border-radius:20px; cursor:pointer; transition:all .15s;
+    white-space:nowrap;
+  }
+  .reset-btn:hover { background:rgba(255,255,255,0.28); }
+
+  /* ── Section label ── */
+  .section-label {
+    display:flex; align-items:center; gap:10px;
+    margin: 1.8rem auto .9rem;
+    max-width:700px;
+  }
+  .sec-icon {
+    width:36px; height:36px; border-radius:10px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:18px; flex-shrink:0;
+  }
+  .section-label h2 { font-family:'Baloo 2',cursive; font-size:1.05rem; font-weight:700; }
+  .section-label p  { font-size:12px; color:#64748b; font-weight:600; }
+
+  /* ── Card ── */
+  .cards { max-width:700px; margin:0 auto; display:flex; flex-direction:column; gap:12px; }
+  .card {
+    background:var(--card); border-radius:16px;
+    padding:1rem 1.2rem;
+    box-shadow:0 2px 8px rgba(13,148,136,.07),0 1px 2px rgba(0,0,0,.04);
+    border:1.5px solid rgba(13,148,136,.08);
+    transition:transform .15s, box-shadow .15s, border-color .25s;
+    animation:slideIn .3s ease both;
+    position:relative; overflow:hidden;
+  }
+  .card::before {
+    content:''; position:absolute; left:0; top:0; bottom:0;
+    width:4px; border-radius:4px 0 0 4px; background:transparent; transition:background .25s;
+  }
+  .card.correct { border-color:rgba(22,163,74,.4); background:#fafffe; }
+  .card.correct::before { background:var(--green); }
+  .card.wrong   { border-color:rgba(239,68,68,.35); background:#fffafa; }
+  .card.wrong::before   { background:var(--red); }
+  @keyframes slideIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+  .card:not(.correct):not(.wrong):hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(13,148,136,.12); }
+
+  .card-top { display:flex; align-items:flex-start; gap:12px; margin-bottom:10px; }
+  .num {
+    width:38px; height:38px; border-radius:12px;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Baloo 2',cursive; font-size:15px; font-weight:800;
+    flex-shrink:0; margin-top:1px; transition:background .25s, color .25s;
+  }
+  .q-text { flex:1; font-size:15px; font-weight:600; line-height:1.6; color:var(--text); }
+  .q-text em {
+    font-style:normal; background:#f0fdfa; color:var(--teal);
+    padding:1px 6px; border-radius:4px; font-size:13px; font-weight:700;
+  }
+
+  /* topic tags */
+  .topic {
+    font-size:10px; font-weight:700; letter-spacing:.06em;
+    padding:2px 8px; border-radius:20px; margin-left:5px;
+    text-transform:uppercase; vertical-align:middle; white-space:nowrap;
+  }
+  .t-pillars  { background:#fef3c7; color:#92400e; }
+  .t-beliefs  { background:#dbeafe; color:#1e40af; }
+  .t-quran    { background:#ccfbf1; color:#0f766e; }
+  .t-prophets { background:#ede9fe; color:#6d28d9; }
+  .t-worship  { background:#dcfce7; color:#166534; }
+  .t-history  { background:#fce7f3; color:#9d174d; }
+
+  /* ── Action buttons ── */
+  .card-actions {
+    display:flex; gap:8px; align-items:center;
+    padding-top:10px; border-top:1px solid rgba(0,0,0,.06);
+  }
+  .action-btn {
+    flex:1; padding:8px 10px; border-radius:10px;
+    font-family:'Nunito',sans-serif; font-size:13px; font-weight:700;
+    cursor:pointer; transition:all .15s;
+    display:flex; align-items:center; justify-content:center; gap:5px;
+  }
+  .btn-correct { background:#dcfce7; color:#166534; border:1.5px solid #86efac; }
+  .btn-correct:hover:not(.active) { background:#bbf7d0; }
+  .btn-correct.active { background:var(--green); color:white; border-color:var(--green); box-shadow:0 2px 8px rgba(22,163,74,.35); }
+  .btn-wrong   { background:#fee2e2; color:#991b1b; border:1.5px solid #fca5a5; }
+  .btn-wrong:hover:not(.active)   { background:#fecaca; }
+  .btn-wrong.active   { background:var(--red); color:white; border-color:var(--red); box-shadow:0 2px 8px rgba(239,68,68,.3); }
+
+  .btn-undo {
+    width:34px; height:34px; border-radius:10px;
+    background:#f1f5f9; border:1.5px solid #e2e8f0;
+    color:#64748b; font-size:15px; cursor:pointer;
+    display:none; align-items:center; justify-content:center;
+    transition:all .15s; flex-shrink:0;
+  }
+  .btn-undo:hover { background:#e2e8f0; color:#334155; }
+  .btn-undo.show  { display:flex; }
+
+  /* num colors */
+  .c1{background:#ccfbf1;color:#0f766e}
+  .c2{background:#fef3c7;color:#b45309}
+  .c3{background:#ede9fe;color:#6d28d9}
+  .c4{background:#fce7f3;color:#be185d}
+  .c5{background:#dcfce7;color:#15803d}
+  .c6{background:#dbeafe;color:#1d4ed8}
+  .num.mc{background:var(--green)!important;color:#fff!important}
+  .num.mw{background:var(--red)!important;color:#fff!important}
+
+  /* ── Result panel ── */
+  .result-panel {
+    max-width:700px; margin:2.5rem auto 0;
+    border-radius:20px; overflow:hidden;
+    display:none; animation:slideIn .4s ease both;
+  }
+  .result-panel.show { display:block; }
+  .result-top { padding:2rem 1.5rem 1.2rem; text-align:center; color:white; }
+  .result-emoji { font-size:3.5rem; margin-bottom:.4rem; }
+  .result-top h2 { font-family:'Baloo 2',cursive; font-size:1.9rem; font-weight:800; margin-bottom:.2rem; }
+  .result-top p  { font-size:14px; opacity:.9; }
+  .result-grid { display:grid; grid-template-columns:repeat(3,1fr); }
+  .result-cell { padding:1.1rem; text-align:center; background:white; }
+  .result-cell + .result-cell { border-left:1px solid #f1f5f9; }
+  .result-cell .big { font-family:'Baloo 2',cursive; font-size:2.2rem; font-weight:800; }
+  .result-cell .lbl { font-size:12px; color:#64748b; font-weight:600; margin-top:2px; }
+  .big-c{color:var(--green)} .big-w{color:var(--red)} .big-p{color:var(--teal)}
+  .result-msg {
+    background:#f8fafc; padding:1rem 1.5rem;
+    font-size:14px; color:#475569; font-weight:600;
+    text-align:center; line-height:1.7; border-top:1px solid #f1f5f9;
+  }
+  .result-msg strong{color:var(--teal)}
+  .retry-btn {
+    display:block; width:calc(100% - 3rem); margin:0 1.5rem 1.2rem;
+    padding:10px; border-radius:12px; border:none;
+    background:var(--teal); color:white;
+    font-family:'Baloo 2',cursive; font-size:16px; font-weight:700;
+    cursor:pointer; transition:background .15s;
+  }
+  .retry-btn:hover { background:#0f766e; }
+
+  /* ── Confetti ── */
+  .confetti-wrap{position:fixed;inset:0;pointer-events:none;z-index:999;overflow:hidden}
+  .cp{position:absolute;animation:cf 2.8s ease-in forwards}
+  @keyframes cf{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
+
+  @media(max-width:560px){
+    .progress-wrap{max-width:120px}
+    .score-counts{gap:10px}
+    .header h1{font-size:1.6rem}
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <h1>30 Questions About<br><span>Islam &amp; the Quran</span></h1>
+  <div class="badge-row">
+    <span class="badge badge-teal">📖 Core Beliefs</span>
+    <span class="badge badge-gold">🕌 Worship &amp; Practice</span>
+    <span class="badge badge-purple">📜 Quran &amp; Prophets</span>
+  </div>
+</div>
+
+<!-- Sticky score bar -->
+<div class="score-bar">
+  <div class="score-counts">
+    <div class="score-pill">
+      <div class="dot dot-correct" id="dot-c">0</div>
+      <span class="pill-label">Correct</span>
+    </div>
+    <div class="score-pill">
+      <div class="dot dot-wrong" id="dot-w">0</div>
+      <span class="pill-label">Wrong</span>
+    </div>
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-track"><div class="progress-fill" id="prog-fill"></div></div>
+    <div class="progress-text" id="prog-text">0 of 30 answered</div>
+  </div>
+  <button class="reset-btn" onclick="resetAll()">↺ Reset</button>
+</div>
+
+<div class="confetti-wrap" id="confetti-wrap"></div>
+
+<!-- ══ SECTION 1 ══ -->
+<div class="section-label">
+  <div class="sec-icon" style="background:#dbeafe">🌙</div>
+  <div>
+    <h2>Section 1 — Core Beliefs &nbsp;<small style="font-weight:600;color:#64748b;font-size:.8rem">Q 1 – 8</small></h2>
+    <p>What Muslims believe about God, angels, and the afterlife</p>
+  </div>
+</div>
+<div class="cards">
+
+  <div class="card" id="card-1" style="animation-delay:.02s">
+    <div class="card-top">
+      <div class="num c1" id="num-1">1</div>
+      <div class="q-text">What is the name of the religion that Muslims follow?<span class="topic t-beliefs">Beliefs</span></div>
+    </div>
+    <div class="card-actions">
+      <button class="action-btn btn-correct" onclick="mark(1,'correct')">✓&nbsp; Correct</button>
+      <button class="action-btn btn-wrong"   onclick="mark(1,'wrong')">✗&nbsp; Wrong</button>
+      <button class="btn-undo" id="undo-1"   onclick="undo(1)" title="Undo">↩</button>
+    </div>
+  </div>
+
+  <div class="card" id="card-2" style="animation-delay:.04s">
+    <div class="card-top">
+      <div class="num c2" id="num-2">2</div>
+      <div class="q-text">What does the word <em>Islam</em> mean in Arabic?<span class="topic t-beliefs">Beliefs</span></div>
+    </div>
+    <div class="card-actions">
+      <button class="action-btn btn-correct" onclick="mark(2,'correct')">✓&nbsp; Correct</button>
+      <button class="action-btn btn-wrong"   onclick="mark(2,'wrong')">✗&nbsp; Wrong</button>
+      <button class="btn-undo" id="undo-2"   onclick="undo(2)" title="Undo">↩</button>
+    </div>
+  </div>
+
+  <div class="card" id="card-3" style="animation-delay:.06s">
+    <div class="card-top">
+      <div class="num c3" id="num-3">3</div>
+      <div class="q-text">What is the name of God in Arabic?<span class="topic t-beliefs">Beliefs</span></div>
+    </div>
+    <div class="card-actions">
+      <button class="action-btn btn-correct" onclick="mark(3,'correct')">✓&nbsp; Correct</button>
+      <button class="action-btn btn-wrong"   onclick="mark(3,'wrong')">✗&nbsp; Wrong</button>
+      <button class="btn-undo" id="undo-3"   onclick="undo(3)" title="Undo">↩</button>
+    </div>
+  </div>
+
+  <div class="card" id="card-4" style="animation-delay:.08s">
+    <div class="card-top">
+      <div class="num c4" id="num-4">4</div>
+      <div class="q-text">How many angels do Muslims believe in — just a few, or an uncountable number?<span class="topic t-beliefs">Beliefs</span></div>
+    </div>
+    <div class="card-actions">
+      <button class="action-btn btn-correct" onclick="mark(4,'correct')">✓&nbsp; Correct</button>
+      <button class="action-btn btn-wrong"   onclick="mark(4,'wrong')">✗&nbsp; Wrong</button>
+      <button class="btn-undo" id="undo-4"   onclick="undo(4)" title="Undo">↩</button>
+    </div>
+  </div>
+
+  <div class="card" id="card-5" style="animation-delay:.10s">
+    <div class="card-top">
+      <div class="num c5" id="num-5">5</div>
+      <div class="q-text">What is the name of the angel who brought the Quran to Prophet Muhammad ﷺ?<span class="topic t-beliefs">Beliefs</span></div>
+    </div>
+    <div class="card-actions">
+      <button class="action-btn btn-correct" onclick="mark(5,'correct')">✓&nbsp; Correct</button>
+      <button class="action-btn btn-wrong"   onclick="mark(5,'wrong')">✗&nbsp; Wrong</button>
+      <button class="btn-undo" id="undo-5"   onclick="undo(5)" title="Undo">↩</button>
+    </div>
+  </div>
+
+  <div class="card" id="card-6" style="animation-delay:.12s">
+    <div class="card-top">
+      <div class="num c6" id="num-6">6</div>
+      <div class="q-text">What is the <em>Shahada</em> and why is it important?<span class="topic t-beliefs">Beliefs</span></div>
+    </div>
+    <div class="card-actions">
+      <button class="action-btn btn-correct" onclick="mark(6,'correct')">✓&nbsp; Correct</button>
+      <button class="action-btn btn-wrong"   onclick="mark(6,'wrong')">✗&nbsp; Wrong</button>
+      <button class="btn-undo" id="undo-6"   onclick="undo(6)" title="Undo">↩</button>
+    </div>
+  </div>
+
+  <div class="card" id="card-7" style="animation-delay:.14s">
+    <div class="card-top">
+      <div class="num c1" id="num-7">7</div>
+      <div class="q-text">Muslims believe in the Day of Judgment. What happens on that day?<span class="topic t-beliefs">Beliefs</span></div>
+    </div>
+    <div class="card-actions">
+      <button class="action-btn btn-correct" onclick="mark(7,'correct')">✓&nbsp; Correct</button>
+      <button class="action-btn btn-wrong"   onclick="mark(7,'wrong')">✗&nbsp; Wrong</button>
+      <button class="btn-undo" id="undo-7"   onclick="undo(7)" title="Undo">↩</button>
+    </div>
+  </div>
+
+  <div class="card" id="card-8" style="animation-delay:.16s">
+    <div class="card-top">
+      <div class="num c2" id="num-8">8</div>
+      <div class="q-text">What is <em>Jannah</em> and what is <em>Jahannam</em>?<span class="topic t-beliefs">Beliefs</span></div>
+    </div>
+    <div class="card-actions">
+      <button class="action-btn btn-correct" onclick="mark(8,'correct')">✓&nbsp; Correct</button>
+      <button class="action-btn btn-wrong"   onclick="mark(8,'wrong')">✗&nbsp; Wrong</button>
+      <button class="btn-undo" id="undo-8"   onclick="undo(8)" title="Undo">↩</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══ SECTION 2 ══ -->
+<div class="section-label">
+  <div class="sec-icon" style="background:#dcfce7">🕌</div>
+  <div>
+    <h2>Section 2 — The Five Pillars &nbsp;<small style="font-weight:600;color:#64748b;font-size:.8rem">Q 9 – 16</small></h2>
+    <p>The five acts of worship every Muslim practises</p>
+  </div>
+</div>
+<div class="cards">
+
+  <div class="card" id="card-9" style="animation-delay:.18s">
+    <div class="card-top">
+      <div class="num c3" id="num-9">9</div>
+      <div class="q-text">What are the <em>Five Pillars of Islam</em>? Can you name them all?<span class="topic t-pillars">Pillars</span></div>
+    </div>
+    <div class="card-actions">
+      <button class="action-btn btn-correct" onclick="mark(9,'correct')">✓&nbsp; Correct</button>
+      <button class="action-btn btn-wrong"   onclick="mark(9,'wrong')">✗&nbsp; Wrong</button>
+      <button class="btn-undo" id="undo-9"   onclick="undo(9)" title="Undo">↩</button>
+    </div>
+  </div>
+
+  <div class="card" id="card-10" style="animation-delay:.20s">
+    <div class="card-top">
+      <div class="num c4" id="num-10">10</div>
+      <div class="q-text">How many times a day do Muslims pray, and what is the Arabic word for prayer?<span class="topic t-pillars">Pillars</span></div>
+    </div>
+    <div class="card-actions">
+      <button class="action-btn btn-correct" onclick="mark(10,'correct')">✓&nbsp; Correct</button>
+      <button class="action-btn btn-wrong"   onclick="mark(10,'wrong')">✗&nbsp; Wrong</button>
+      <button class="btn-undo" id="undo-10"  onclick="undo(10)" title="Undo">↩</button>
+    </div>
+  </div>
+
+  <div class="card" id="card-11" style="animation-delay:.22s">
+    <div class="card-top">
+      <div class="num c5" id="num-11">11</div>
+      <div class="q-text">What do Muslims say at the beginning of every prayer?<span class="topic t-worship">Worship</span></div>
+    </div>
+    <div class="card-actions">
+      <button class="action-btn btn-correct" onclick="mark(11,'correct')">✓&nbsp; Correct</button>
+      <button class="action-btn btn-wrong"   onclick="mark(11,'wrong')">✗&nbsp; Wrong</button>
+      <button class="btn-undo" id="undo-11"  onclick="undo(11)" title="Undo">↩</button>
+    </div>
+  </div>
+
+  <div class="card" id="card-12" style="animation-delay:.24s">
+    <div class="card-top">
+      <div class="num c6" id="num-12">12</div>
+      <div class="q-text">What is <em>Zakat</em> and who should receive it?<span class="topic t-pillars">Pillars</span></div>
+    </div>
+    <div class="card-actions">
+      <button class="action-btn btn-correct" onclick="mark(12,'correct')">✓&nbsp; Correct</button>
+      <button class="action-btn btn-wrong"   onclick="mark(12,'wrong')">✗&nbsp; Wrong</button>
+      <button class="btn-undo" id="undo-12"  onclick="undo(12)" title="Undo">↩</button>
+    </div>
+  </div>
+
+  <div class="card" id="card-13" style="animation-delay:.26s">
+    <div class="card-top">
+      <div class="num c1" id="num-13">13</div>
+      <div class="q-text">Which month of the Islamic calendar is special for fasting? What is that fast called?<span class="topic t-pillars">Pillars</span></div>
+    </div>
+    <div class="card-actions">
+      <button class="action-btn btn-correct" onclick="mark(13,'correct')">✓&nbsp; Correct</button>
+      <button class="action-btn btn-wrong"   onclick="mark(13,'wrong')">✗&nbsp; Wrong</button>
+      <button class="btn-undo" id="undo-13"  onclick="undo(13)" title="Undo">↩</button>
+    </div>
+  </div>
+
+  <div class="card" id="card-14" style="animation-delay:.28s">
+    <div class="card-top">
+      <div class="num c2" id="num-14">14</div>
+      <div class="q-text">What is <em>Hajj</em> and which city do Muslims travel to for it?<span class="topic t-pillars">Pillars</span></div>
+    </div>
+    <div class="card-actions">
+      <button class="action-btn btn-correct" onclick="mark(14,'correct')">✓&nbsp; Correct</button>
+      <button class="action-btn btn-wrong"   onclick="mark(14,'wrong')">✗&nbsp; Wrong</button>
+      <button class="btn-undo" id="undo-14"  onclick="undo(14)" title="Undo">↩</button>
+    </div>
+  </div>
+
+  <div class="card" id="card-15" style="animation-delay:.30s">
+    <div class="card-top">
+      <div class="num c3" id="num-15">15</div>
+      <div class="q-text">What is <em>Wudu</em> and why do Muslims perform it before prayer?<span class="topic t-worship">Worship</span></div>
+    </div>
+    <div class="card-actions">
+      <button class="action-btn btn-correct" onclick="mark(15,'correct')">✓&nbsp; Correct</button>
+      <button class="action-btn btn-wrong"   onclick="mark(15,'wrong')">✗&nbsp; Wrong</button>
+      <button class="btn-undo" id="undo-15"  onclick="undo(15)" title="Undo">↩</button>
+    </div>
+  </div>
+
+  <div class="card" id="card-16" style="animation-delay:.32s">
+    <div class="card-top">
+      <div class="num c4" id="num-16">16</div>
+      <div class="q-text">What direction do Muslims face when they pray, and what is that direction called?<span class="topic t-worship">Worship</span></div>
+    </div>
+    <div class="card-actions">
+      <button class="action-btn btn-correct" onclick="mark(16,'correct')">✓&nbsp; Correct</button>
+      <button class="action-btn btn-wrong"   onclick="mark(16,'wrong')">✗&nbsp; Wrong</button>
+      <button class="btn-undo" id="undo-16"  onclick="undo(16)" title="Undo">↩</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══ SECTION 3 ══ -->
+<div class="section-label">
+  <div class="sec-icon" style="background:#ccfbf1">📖</div>
+  <div>
+    <h2>Section 3 — The Holy Quran &nbsp;<small style="font-weight:600;color:#64748b;font-size:.8rem">Q 17 – 23</small></h2>
+    <p>Facts about Islam's holy book</p>
+  </div>
+</div>
+<div class="cards">
+
+  <div class="card" id="card-17" style="animation-delay:.34s">
+    <div class="card-top">
+      <div class="num c5" id="num-17">17</div>
+      <div class="q-text">What is the name of Islam's holy book, and in which language was it revealed?<span class="topic t-quran">Quran</span></div>
+    </div>
+    <div class="card-actions">
+      <button class="action-btn btn-correct" onclick="mark(17,'correct')">✓&nbsp; Correct</button>
+      <button class="action-btn btn-wrong"   onclick="mark(17,'wrong')">✗&nbsp; Wrong</button>
+      <button class="btn-undo" id="undo-17"  onclick="undo(17)" title="Undo">↩</button>
+    </div>
+  </div>
+
+  <div class="card" id="card-18" style="animation-delay:.36s">
+    <div class="card-top">
+      <div class="num c6" id="num-18">18</div>
+      <div class="q-text">How many chapters (<em>surahs</em>) are in the Quran?<span class="topic t-quran">Quran</span></div>
+    </div>
+    <div class="card-actions">
+      <button class="action-btn btn-correct" onclick="mark(18,'correct')">✓&nbsp; Correct</button>
+      <button class="action-btn btn-wrong"   onclick="mark(18,'wrong')">✗&nbsp; Wrong</button>
+      <button class="btn-undo" id="undo-18"  onclick="undo(18)" title="Undo">↩</button>
+    </div>
+  </div>
+
+  <div class="card" id="card-19" style="animation-delay:.38s">
+    <div class="card-top">
+      <div class="num c1" id="num-19">19</div>
+      <div class="q-text">What is the very first surah of the Quran called, and what does its name mean?<span class="topic t-quran">Quran</span></div>
+    </div>
+    <div class="card-actions">
+      <button class="action-btn btn-correct" onclick="mark(19,'correct')">✓&nbsp; Correct</button>
+      <button class="action-btn btn-wrong"   onclick="mark(19,'wrong')">✗&nbsp; Wrong</button>
+      <button class="btn-undo" id="undo-19"  onclick="undo(19)" title="Undo">↩</button>
+    </div>
+  </div>
+
+  <div class="card" id="card-20" style="animation-delay:.40s">
+    <div class="card-top">
+      <div class="num c2" id="num-20">20</div>
+      <div class="q-text">What phrase do Muslims say before reading the Quran or starting anything important? <em>Hint: it starts with Bismillah…</em><span class="topic t-quran">Quran</span></div>
+    </div>
+    <div class="card-actions">
+      <button class="action-btn btn-correct" onclick="mark(20,'correct')">✓&nbsp; Correct</button>
+      <button class="action-btn btn-wrong"   onclick="mark(20,'wrong')">✗&nbsp; Wrong</button>
+      <button class="btn-undo" id="undo-20"  onclick="undo(20)" title="Undo">↩</button>
+    </div>
+  </div>
+
+  <div class="card" id="card-21" style="animation-delay:.42s">
+    <div class="card-top">
+      <div class="num c3" id="num-21">21</div>
+      <div class="q-text">What is a <em>hafiz</em>? Why is it considered something special?<span class="topic t-quran">Quran</span></div>
+    </div>
+    <div class="card-actions">
+      <button class="action-btn btn-correct" onclick="mark(21,'correct')">✓&nbsp; Correct</button>
+      <button class="action-btn btn-wrong"   onclick="mark(21,'wrong')">✗&nbsp; Wrong</button>
+      <button class="btn-undo" id="undo-21"  onclick="undo(21)" title="Undo">↩</button>
+    </div>
+  </div>
+
+  <div class="card" id="card-22" style="animation-delay:.44s">
+    <div class="card-top">
+      <div class="num c4" id="num-22">22</div>
+      <div class="q-text">Over how many years was the Quran revealed to Prophet Muhammad ﷺ?<span class="topic t-quran">Quran</span></div>
+    </div>
+    <div class="card-actions">
+      <button class="action-btn btn-correct" onclick="mark(22,'correct')">✓&nbsp; Correct</button>
+      <button class="action-btn btn-wrong"   onclick="mark(22,'wrong')">✗&nbsp; Wrong</button>
+      <button class="btn-undo" id="undo-22"  onclick="undo(22)" title="Undo">↩</button>
+    </div>
+  </div>
+
+  <div class="card" id="card-23" style="animation-delay:.46s">
+    <div class="card-top">
+      <div class="num c5" id="num-23">23</div>
+      <div class="q-text">What is the longest chapter and what is the shortest chapter of the Quran?<span class="topic t-quran">Quran</span></div>
+    </div>
+    <div class="card-actions">
+      <button class="action-btn btn-correct" onclick="mark(23,'correct')">✓&nbsp; Correct</button>
+      <button class="action-btn btn-wrong"   onclick="mark(23,'wrong')">✗&nbsp; Wrong</button>
+      <button class="btn-undo" id="undo-23"  onclick="undo(23)" title="Undo">↩</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══ SECTION 4 ══ -->
+<div class="section-label">
+  <div class="sec-icon" style="background:#ede9fe">⭐</div>
+  <div>
+    <h2>Section 4 — Prophets &amp; History &nbsp;<small style="font-weight:600;color:#64748b;font-size:.8rem">Q 24 – 30</small></h2>
+    <p>The great messengers and key events in Islamic history</p>
+  </div>
+</div>
+<div class="cards">
+
+  <div class="card" id="card-24" style="animation-delay:.48s">
+    <div class="card-top">
+      <div class="num c6" id="num-24">24</div>
+      <div class="q-text">Who was the last and final Prophet of Islam?<span class="topic t-prophets">Prophets</span></div>
+    </div>
+    <div class="card-actions">
+      <button class="action-btn btn-correct" onclick="mark(24,'correct')">✓&nbsp; Correct</button>
+      <button class="action-btn btn-wrong"   onclick="mark(24,'wrong')">✗&nbsp; Wrong</button>
+      <button class="btn-undo" id="undo-24"  onclick="undo(24)" title="Undo">↩</button>
+    </div>
+  </div>
+
+  <div class="card" id="card-25" style="animation-delay:.50s">
+    <div class="card-top">
+      <div class="num c1" id="num-25">25</div>
+      <div class="q-text">In which city was Prophet Muhammad ﷺ born?<span class="topic t-history">History</span></div>
+    </div>
+    <div class="card-actions">
+      <button class="action-btn btn-correct" onclick="mark(25,'correct')">✓&nbsp; Correct</button>
+      <button class="action-btn btn-wrong"   onclick="mark(25,'wrong')">✗&nbsp; Wrong</button>
+      <button class="btn-undo" id="undo-25"  onclick="undo(25)" title="Undo">↩</button>
+    </div>
+  </div>
+
+  <div class="card" id="card-26" style="animation-delay:.52s">
+    <div class="card-top">
+      <div class="num c2" id="num-26">26</div>
+      <div class="q-text">Can you name <em>five</em> prophets that Muslims believe in?<span class="topic t-prophets">Prophets</span></div>
+    </div>
+    <div class="card-actions">
+      <button class="action-btn btn-correct" onclick="mark(26,'correct')">✓&nbsp; Correct</button>
+      <button class="action-btn btn-wrong"   onclick="mark(26,'wrong')">✗&nbsp; Wrong</button>
+      <button class="btn-undo" id="undo-26"  onclick="undo(26)" title="Undo">↩</button>
+    </div>
+  </div>
+
+  <div class="card" id="card-27" style="animation-delay:.54s">
+    <div class="card-top">
+      <div class="num c3" id="num-27">27</div>
+      <div class="q-text">Which prophet built the <em>Kaaba</em> in Mecca, and who helped him?<span class="topic t-history">History</span></div>
+    </div>
+    <div class="card-actions">
+      <button class="action-btn btn-correct" onclick="mark(27,'correct')">✓&nbsp; Correct</button>
+      <button class="action-btn btn-wrong"   onclick="mark(27,'wrong')">✗&nbsp; Wrong</button>
+      <button class="btn-undo" id="undo-27"  onclick="undo(27)" title="Undo">↩</button>
+    </div>
+  </div>
+
+  <div class="card" id="card-28" style="animation-delay:.56s">
+    <div class="card-top">
+      <div class="num c4" id="num-28">28</div>
+      <div class="q-text">What is the <em>Kaaba</em> and why is it so special to Muslims?<span class="topic t-history">History</span></div>
+    </div>
+    <div class="card-actions">
+      <button class="action-btn btn-correct" onclick="mark(28,'correct')">✓&nbsp; Correct</button>
+      <button class="action-btn btn-wrong"   onclick="mark(28,'wrong')">✗&nbsp; Wrong</button>
+      <button class="btn-undo" id="undo-28"  onclick="undo(28)" title="Undo">↩</button>
+    </div>
+  </div>
+
+  <div class="card" id="card-29" style="animation-delay:.58s">
+    <div class="card-top">
+      <div class="num c5" id="num-29">29</div>
+      <div class="q-text">What are the two most important festivals (<em>Eid</em>) celebrated by Muslims?<span class="topic t-history">History</span></div>
+    </div>
+    <div class="card-actions">
+      <button class="action-btn btn-correct" onclick="mark(29,'correct')">✓&nbsp; Correct</button>
+      <button class="action-btn btn-wrong"   onclick="mark(29,'wrong')">✗&nbsp; Wrong</button>
+      <button class="btn-undo" id="undo-29"  onclick="undo(29)" title="Undo">↩</button>
+    </div>
+  </div>
+
+  <div class="card" id="card-30" style="animation-delay:.60s">
+    <div class="card-top">
+      <div class="num c6" id="num-30">30</div>
+      <div class="q-text">What does <em>Assalamu Alaikum</em> mean, and why do Muslims greet each other with these words?<span class="topic t-beliefs">Beliefs</span></div>
+    </div>
+    <div class="card-actions">
+      <button class="action-btn btn-correct" onclick="mark(30,'correct')">✓&nbsp; Correct</button>
+      <button class="action-btn btn-wrong"   onclick="mark(30,'wrong')">✗&nbsp; Wrong</button>
+      <button class="btn-undo" id="undo-30"  onclick="undo(30)" title="Undo">↩</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══ Result panel ══ -->
+<div class="result-panel" id="result-panel">
+  <div class="result-top" id="result-top">
+    <div class="result-emoji" id="result-emoji">🌟</div>
+    <h2 id="result-title">Quiz Complete!</h2>
+    <p id="result-sub">Here's your score</p>
+  </div>
+  <div class="result-grid">
+    <div class="result-cell"><div class="big big-c" id="res-c">0</div><div class="lbl">✅ Correct</div></div>
+    <div class="result-cell"><div class="big big-w" id="res-w">0</div><div class="lbl">❌ Wrong</div></div>
+    <div class="result-cell"><div class="big big-p" id="res-p">0%</div><div class="lbl">📊 Score</div></div>
+  </div>
+  <div class="result-msg" id="result-msg"></div>
+  <button class="retry-btn" onclick="resetAll()">↺ Try Again</button>
+</div>
+
+<script>
+  const TOTAL = 30;
+  const state = {};
+  const baseC = {
+    1:'c1',2:'c2',3:'c3',4:'c4',5:'c5',6:'c6',
+    7:'c1',8:'c2',9:'c3',10:'c4',11:'c5',12:'c6',
+    13:'c1',14:'c2',15:'c3',16:'c4',17:'c5',18:'c6',
+    19:'c1',20:'c2',21:'c3',22:'c4',23:'c5',24:'c6',
+    25:'c1',26:'c2',27:'c3',28:'c4',29:'c5',30:'c6'
+  };
+
+  function mark(n, type) {
+    state[n] = type;
+    const card = document.getElementById('card-'+n);
+    const num  = document.getElementById('num-'+n);
+    const undo = document.getElementById('undo-'+n);
+    const btns = card.querySelectorAll('.action-btn');
+    card.classList.remove('correct','wrong');
+    card.classList.add(type);
+    num.className = 'num ' + (type==='correct' ? 'mc' : 'mw');
+    btns[0].classList.toggle('active', type==='correct');
+    btns[1].classList.toggle('active', type==='wrong');
+    undo.classList.add('show');
+    refresh();
+  }
+
+  function undo(n) {
+    delete state[n];
+    const card = document.getElementById('card-'+n);
+    const num  = document.getElementById('num-'+n);
+    const undo = document.getElementById('undo-'+n);
+    card.classList.remove('correct','wrong');
+    num.className = 'num '+baseC[n];
+    card.querySelectorAll('.action-btn').forEach(b=>b.classList.remove('active'));
+    undo.classList.remove('show');
+    refresh();
+  }
+
+  function refresh() {
+    const vals     = Object.values(state);
+    const correct  = vals.filter(v=>v==='correct').length;
+    const wrong    = vals.filter(v=>v==='wrong').length;
+    const answered = correct + wrong;
+    document.getElementById('dot-c').textContent = correct;
+    document.getElementById('dot-w').textContent = wrong;
+    document.getElementById('prog-fill').style.width = (answered/TOTAL*100)+'%';
+    document.getElementById('prog-text').textContent = answered+' of '+TOTAL+' answered';
+    if (answered === TOTAL) showResult(correct, wrong);
+    else document.getElementById('result-panel').classList.remove('show');
+  }
+
+  function showResult(correct, wrong) {
+    const pct = Math.round(correct/TOTAL*100);
+    document.getElementById('res-c').textContent = correct;
+    document.getElementById('res-w').textContent = wrong;
+    document.getElementById('res-p').textContent = pct+'%';
+    let emoji,title,sub,bg,msg;
+    if (pct===100) {
+      emoji='🏆';title='Perfect Score!';sub='30 out of 30 — Outstanding!';
+      bg='linear-gradient(135deg,#16a34a,#15803d)';
+      msg='🌟 MashaAllah! You answered every single question correctly. Incredible!';
+      confetti();
+    } else if (pct>=80) {
+      emoji='⭐';title='Excellent!';sub=correct+' out of 30 — Well done!';
+      bg='linear-gradient(135deg,#0d9488,#0891b2)';
+      msg='🎉 Great job! Review the <strong>'+wrong+' missed question'+(wrong>1?'s':'')+'</strong> in the Answer Document and try again!';
+    } else if (pct>=60) {
+      emoji='👍';title='Good Effort!';sub=correct+' out of 30 — Keep going!';
+      bg='linear-gradient(135deg,#d97706,#f59e0b)';
+      msg='📖 You\'re making progress! Check the Answer Document for the questions you missed.';
+    } else {
+      emoji='💪';title='Keep Learning!';sub=correct+' out of 30 — You can do it!';
+      bg='linear-gradient(135deg,#7c3aed,#a855f7)';
+      msg='🌱 Every expert was once a beginner! Open the Answer Document, study carefully, then try again.';
+    }
+    document.getElementById('result-emoji').textContent = emoji;
+    document.getElementById('result-title').textContent = title;
+    document.getElementById('result-sub').textContent   = sub;
+    document.getElementById('result-top').style.background = bg;
+    document.getElementById('result-msg').innerHTML     = msg;
+    const panel = document.getElementById('result-panel');
+    panel.classList.add('show');
+    setTimeout(()=>panel.scrollIntoView({behavior:'smooth',block:'nearest'}),100);
+  }
+
+  function resetAll() {
+    Object.keys(state).forEach(n=>{ delete state[n]; });
+    for(let n=1;n<=TOTAL;n++){
+      const card=document.getElementById('card-'+n);
+      const num =document.getElementById('num-'+n);
+      const undoBtn=document.getElementById('undo-'+n);
+      card.classList.remove('correct','wrong');
+      num.className='num '+baseC[n];
+      card.querySelectorAll('.action-btn').forEach(b=>b.classList.remove('active'));
+      undoBtn.classList.remove('show');
+    }
+    document.getElementById('dot-c').textContent='0';
+    document.getElementById('dot-w').textContent='0';
+    document.getElementById('prog-fill').style.width='0%';
+    document.getElementById('prog-text').textContent='0 of 30 answered';
+    document.getElementById('result-panel').classList.remove('show');
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  function confetti() {
+    const wrap=document.getElementById('confetti-wrap');
+    wrap.innerHTML='';
+    const colors=['#14b8a6','#f59e0b','#8b5cf6','#ef4444','#22c55e','#3b82f6','#ec4899','#f97316'];
+    for(let i=0;i<90;i++){
+      const el=document.createElement('div');
+      el.className='cp';
+      const size=6+Math.random()*9;
+      el.style.cssText=[
+        'left:'+Math.random()*100+'%',
+        'top:'+(Math.random()*-8-2)+'vh',
+        'width:'+size+'px','height:'+size+'px',
+        'background:'+colors[Math.floor(Math.random()*colors.length)],
+        'border-radius:'+(Math.random()>.5?'50%':'3px'),
+        'animation-delay:'+Math.random()*1.2+'s',
+        'animation-duration:'+(2.2+Math.random()*1.4)+'s'
+      ].join(';');
+      wrap.appendChild(el);
+    }
+    setTimeout(()=>{wrap.innerHTML='';},4500);
+  }
+</script>
+</body>
+</html>
